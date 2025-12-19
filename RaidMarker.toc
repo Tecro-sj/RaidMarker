@@ -1,0 +1,9 @@
+## Interface: 30300
+## Title: |cff00ff00Raid Marker|r
+## Notes: Simple raid marker addon for placing ground and target markers
+## Author: YourName
+## Version: 1.0
+## SavedVariables: RaidMarkerDB
+
+RaidMarker.lua
+RaidMarker_Options.lua
