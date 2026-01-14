@@ -83,11 +83,7 @@ local function CreateMainFrame()
     frame.closeBtn:SetWidth(20)
     frame.closeBtn:SetHeight(20)
     frame.closeBtn:SetScript("OnClick", function()
-        if not InCombatLockdown() then
-            RaidMarkerFrame:Hide()
-        else
-            print("|cffff0000RaidMarker:|r Cannot close during combat")
-        end
+        SafeHideFrame(RaidMarkerFrame)
     end)
 
     -- Make draggable
@@ -255,6 +251,28 @@ function RaidMarker:HasGroupPermissions()
     end
 end
 
+-- Helper function to safely hide frame (works in combat too)
+local function SafeHideFrame(frame)
+    if not InCombatLockdown() then
+        frame:Hide()
+    else
+        -- During combat, make it invisible and non-interactive instead
+        frame:SetAlpha(0)
+        frame:EnableMouse(false)
+    end
+end
+
+-- Helper function to safely show frame
+local function SafeShowFrame(frame)
+    if not InCombatLockdown() then
+        frame:Show()
+    else
+        -- During combat, just make it visible and interactive
+        frame:SetAlpha(1)
+        frame:EnableMouse(true)
+    end
+end
+
 -- Check if frame should be shown based on settings
 function RaidMarker:UpdateFrameVisibility()
     if not RaidMarkerFrame then return end
@@ -288,13 +306,11 @@ function RaidMarker:UpdateFrameVisibility()
         end
     end
 
-    -- Apply visibility (but not during combat lockdown)
-    if not InCombatLockdown() then
-        if shouldShow then
-            RaidMarkerFrame:Show()
-        else
-            RaidMarkerFrame:Hide()
-        end
+    -- Apply visibility
+    if shouldShow then
+        SafeShowFrame(RaidMarkerFrame)
+    else
+        SafeHideFrame(RaidMarkerFrame)
     end
 end
 
@@ -305,19 +321,15 @@ SlashCmdList["RAIDMARKER"] = function(msg)
     msg = string.lower(msg or "")
 
     if msg == "" or msg == "toggle" then
-        if InCombatLockdown() then
-            print("|cffff0000RaidMarker:|r Cannot toggle during combat")
-            return
-        end
-        if RaidMarkerFrame:IsShown() then
-            RaidMarkerFrame:Hide()
+        if RaidMarkerFrame:IsShown() or (InCombatLockdown() and RaidMarkerFrame:GetAlpha() > 0) then
+            SafeHideFrame(RaidMarkerFrame)
         else
             -- Check if any restrictive options are enabled
             if RaidMarkerDB.showOnlyInDungeon or RaidMarkerDB.showOnlyInGroup or RaidMarkerDB.hideInCombat then
                 print("|cffff8800RaidMarker:|r Auto-show options are enabled. Use /rm options to change settings")
                 return
             end
-            RaidMarkerFrame:Show()
+            SafeShowFrame(RaidMarkerFrame)
         end
     elseif msg == "options" or msg == "config" then
         RaidMarker_OpenOptions()
@@ -370,7 +382,12 @@ eventFrame:SetScript("OnEvent", function(self, event, addon)
         -- Entering combat
         RaidMarker:UpdateFrameVisibility()
     elseif event == "PLAYER_REGEN_ENABLED" then
-        -- Leaving combat
+        -- Leaving combat - restore proper Hide() state if needed
+        if RaidMarkerFrame and RaidMarkerFrame:GetAlpha() == 0 then
+            RaidMarkerFrame:Hide()
+            RaidMarkerFrame:SetAlpha(1)
+            RaidMarkerFrame:EnableMouse(true)
+        end
         RaidMarker:UpdateFrameVisibility()
     elseif event == "GROUP_ROSTER_UPDATE" then
         -- Group changed
