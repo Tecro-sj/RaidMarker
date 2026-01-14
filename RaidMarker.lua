@@ -83,7 +83,11 @@ local function CreateMainFrame()
     frame.closeBtn:SetWidth(20)
     frame.closeBtn:SetHeight(20)
     frame.closeBtn:SetScript("OnClick", function()
-        RaidMarkerFrame:Hide()
+        if not InCombatLockdown() then
+            RaidMarkerFrame:Hide()
+        else
+            print("|cffff0000RaidMarker:|r Cannot close during combat")
+        end
     end)
 
     -- Make draggable
@@ -284,11 +288,13 @@ function RaidMarker:UpdateFrameVisibility()
         end
     end
 
-    -- Apply visibility
-    if shouldShow then
-        RaidMarkerFrame:Show()
-    else
-        RaidMarkerFrame:Hide()
+    -- Apply visibility (but not during combat lockdown)
+    if not InCombatLockdown() then
+        if shouldShow then
+            RaidMarkerFrame:Show()
+        else
+            RaidMarkerFrame:Hide()
+        end
     end
 end
 
@@ -299,6 +305,10 @@ SlashCmdList["RAIDMARKER"] = function(msg)
     msg = string.lower(msg or "")
 
     if msg == "" or msg == "toggle" then
+        if InCombatLockdown() then
+            print("|cffff0000RaidMarker:|r Cannot toggle during combat")
+            return
+        end
         if RaidMarkerFrame:IsShown() then
             RaidMarkerFrame:Hide()
         else

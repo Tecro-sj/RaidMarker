@@ -38,7 +38,11 @@ function RaidMarker_OpenOptions()
         optionsFrame.closeBtn:SetWidth(24)
         optionsFrame.closeBtn:SetHeight(24)
         optionsFrame.closeBtn:SetScript("OnClick", function()
-            optionsFrame:Hide()
+            if not InCombatLockdown() then
+                optionsFrame:Hide()
+            else
+                print("|cffff0000RaidMarker:|r Cannot close during combat")
+            end
         end)
 
         -- Make draggable
@@ -195,6 +199,11 @@ function RaidMarker_OpenOptions()
         end)
 
         optionsFrame:Hide()
+    end
+
+    if InCombatLockdown() then
+        print("|cffff0000RaidMarker:|r Cannot open/close options during combat")
+        return
     end
 
     if optionsFrame:IsShown() then
