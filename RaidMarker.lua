@@ -2,6 +2,28 @@
 RaidMarker = {}
 RaidMarker.version = "1.0"
 
+-- Helper function to safely hide frame (works in combat too)
+local function SafeHideFrame(frame)
+    if not InCombatLockdown() then
+        frame:Hide()
+    else
+        -- During combat, make it invisible and non-interactive instead
+        frame:SetAlpha(0)
+        frame:EnableMouse(false)
+    end
+end
+
+-- Helper function to safely show frame
+local function SafeShowFrame(frame)
+    if not InCombatLockdown() then
+        frame:Show()
+    else
+        -- During combat, just make it visible and interactive
+        frame:SetAlpha(1)
+        frame:EnableMouse(true)
+    end
+end
+
 -- Default settings
 local defaults = {
     scale = 1.0,
@@ -248,28 +270,6 @@ function RaidMarker:HasGroupPermissions()
         -- In Classic, we check if we can assign roles (only leader can)
         -- For regular dungeon groups, all can place markers, so we only restrict in raids
         return true
-    end
-end
-
--- Helper function to safely hide frame (works in combat too)
-local function SafeHideFrame(frame)
-    if not InCombatLockdown() then
-        frame:Hide()
-    else
-        -- During combat, make it invisible and non-interactive instead
-        frame:SetAlpha(0)
-        frame:EnableMouse(false)
-    end
-end
-
--- Helper function to safely show frame
-local function SafeShowFrame(frame)
-    if not InCombatLockdown() then
-        frame:Show()
-    else
-        -- During combat, just make it visible and interactive
-        frame:SetAlpha(1)
-        frame:EnableMouse(true)
     end
 end
 
